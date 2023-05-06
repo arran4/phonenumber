@@ -12,5 +12,5 @@ Wrote: out.png
 
 And you get: 
 
-!(./doc/sample1.png)[]
+![](./doc/sample1.png)
 

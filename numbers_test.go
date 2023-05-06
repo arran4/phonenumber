@@ -120,6 +120,18 @@ func TestNumbers(t *testing.T) {
 			want: "2 3 45",
 			args: []any{OpIgnoreSpace},
 		},
+		{
+			name: "Dot pauses",
+			s:    "hello",
+			want: "4433555.555666",
+			args: []any{OpDotPauses},
+		},
+		{
+			name: "Pass through unknowns",
+			s:    "hello?",
+			want: "4433555 555666?",
+			args: []any{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

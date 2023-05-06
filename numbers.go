@@ -62,17 +62,18 @@ func Numbers(s string, ops ...any) string {
 		lcr := unicode.ToLower(r)
 		s, ok := lookup[lcr]
 		if !ok {
+			result[p] = r
 			p++
 			prev = r
 			continue
 		}
 		if prev == rune(s[0]) {
-			p++
 			if dotPauses {
 				result[p] = '.'
 			} else {
 				result[p] = ' '
 			}
+			p++
 		}
 		prev = rune(s[0])
 		copy(result[p:], []rune(s))

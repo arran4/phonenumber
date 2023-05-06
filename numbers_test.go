@@ -92,6 +92,7 @@ func TestNumbers(t *testing.T) {
 		name string
 		s    string
 		want string
+		args []any
 	}{
 		{
 			name: "abc",
@@ -108,10 +109,21 @@ func TestNumbers(t *testing.T) {
 			s:    "123",
 			want: "122223333",
 		},
+		{
+			name: "Spaces",
+			s:    "a d gj",
+			want: "203045",
+		},
+		{
+			name: "Spaces Ignore spaces",
+			s:    "a d gj",
+			want: "2 3 45",
+			args: []any{OpIgnoreSpace},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Numbers(tt.s); got != tt.want {
+			if got := Numbers(tt.s, tt.args...); got != tt.want {
 				t.Errorf("Numbers() = %v, want %v", got, tt.want)
 			}
 		})

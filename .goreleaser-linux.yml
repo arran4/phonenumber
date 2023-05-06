@@ -21,8 +21,6 @@ builds:
     id: "drawphonegui"
     binary: "drawphonegui"
     dir: cmd/drawphonegui
-    env:
-      - CGO_ENABLED=0
     goos:
       - linux
     goarch:

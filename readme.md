@@ -14,3 +14,7 @@ And you get:
 
 ![](./doc/sample1.png)
 
+
+## Download?
+
+Get it here: https://github.com/arran4/phonenumber/releases

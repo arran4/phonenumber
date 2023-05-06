@@ -27,6 +27,7 @@ builds:
       - amd64
 archives:
   -
+    allow_different_binary_count: true
     format_overrides:
       - goos: windows
         format: zip

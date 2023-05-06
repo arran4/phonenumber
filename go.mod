@@ -3,9 +3,11 @@ module phonenumber
 go 1.20
 
 require (
+	bitbucket.org/rj/goey v0.9.1-0.20220128211443-c35bd7e91150
 	github.com/arran4/golang-wordwrap v0.0.0-20230506043234-83bc372c0110
 	github.com/google/go-cmp v0.5.9
 	github.com/tdewolff/canvas v0.0.0-20230503192432-76683a029c82
+	golang.org/x/image v0.6.0
 )
 
 require (
@@ -20,10 +22,11 @@ require (
 	github.com/go-latex/latex v0.0.0-20230307184459-12ec69307ad9 // indirect
 	github.com/go-text/typesetting v0.0.0-20230502123426-87572f5551cf // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/lxn/win v0.0.0-20191128105842-2da648fda5b4 // indirect
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.5 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
-	golang.org/x/image v0.6.0 // indirect
+	gitlab.com/stone.code/assert v0.0.0-20191212205015-97cac9777adf // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	gonum.org/v1/plot v0.12.0 // indirect

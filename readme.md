@@ -4,6 +4,8 @@ Nokia keypad simulate / generator for a meme..
 
 ## Usage:
 
+### Command line
+
 ```bash
 $ drawphonecli -outfile out.png -text "Hello how are you?" -fontsize 12
 '4433555.555666 446669 277733 99966688?'
@@ -14,6 +16,9 @@ And you get:
 
 ![](./doc/sample1.png)
 
+### Desktop (Win, Linux, mac os x maybe later?)
+
+![](doc/gui.png)
 
 ## Download?
 

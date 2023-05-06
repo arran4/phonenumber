@@ -1,37 +1,125 @@
 package main
 
 import (
-	"flag"
+	"bitbucket.org/rj/goey"
+	"bitbucket.org/rj/goey/base"
+	"bitbucket.org/rj/goey/loop"
+	"bitbucket.org/rj/goey/windows"
 	"fmt"
 	"github.com/arran4/golang-wordwrap/util"
-	"log"
-	"os"
 	"phonenumber"
+	"strconv"
+)
+
+var (
+	window   *windows.Window
+	fn       = "out.png"
+	text     = "Hello how are you?"
+	result   = phonenumber.Numbers(text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+	fontsize = "12"
 )
 
 func main() {
-	fs := flag.NewFlagSet("", flag.ExitOnError)
-	fn := fs.String("outfile", "out.png", "The output filename")
-	text := fs.String("text", "Hello how are you?", "Text to write")
-	fontsize := fs.Float64("fontsize", 12, "Font size")
-	if err := fs.Parse(os.Args); err != nil {
-		fmt.Println("Error processing args", err)
+	err := loop.Run(createWindow)
+	if err != nil {
+		fmt.Println("Error: ", err)
 	}
-	if !fs.Parsed() {
-		return
+}
+
+func createWindow() error {
+	w, err := windows.NewWindow("Generate Nokia Phonenumbers", renderWindow())
+	if err != nil {
+		return err
 	}
-	flag.Parse()
-	s := phonenumber.Numbers(*text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
-	log.Printf("'%s'", s)
+	w.SetScroll(false, true)
+	window = w
+	return nil
+}
+
+func updateWindow() {
+	window.SetChild(renderWindow())
+}
+
+func renderWindow() base.Widget {
+	tabs := &goey.Tabs{
+		Insets: goey.DefaultInsets(),
+		Children: []goey.TabItem{
+			renderTab(),
+		},
+		OnChange: func(i int) {
+			updateWindow()
+		},
+	}
+	return &goey.Padding{
+		Insets: goey.DefaultInsets(),
+		Child:  tabs,
+	}
+}
+
+func renderTab() goey.TabItem {
+	return goey.TabItem{
+		Caption: "Configuration / Authentication",
+		Child: &goey.VBox{
+			Children: []base.Widget{
+				&goey.Label{Text: "Text:"},
+				&goey.TextInput{
+					Value:       text,
+					Placeholder: "Hidden",
+					OnChange: func(v string) {
+						text = v
+						result = phonenumber.Numbers(v, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+					},
+					OnEnterKey: func(value string) {
+						updateWindow()
+					},
+				},
+				&goey.Label{Text: "Result: (Press enter above to refresh)"},
+				&goey.TextInput{
+					Value:       result,
+					Placeholder: "Hidden",
+					Disabled:    true,
+				},
+				&goey.Label{Text: "Font size:"},
+				&goey.TextInput{
+					Value:       fontsize,
+					Placeholder: "Hidden",
+					OnChange: func(v string) {
+						fontsize = v
+						updateWindow()
+					},
+				},
+				&goey.Label{Text: "Output filename:"},
+				&goey.TextInput{
+					Value:       fn,
+					Placeholder: "Hidden",
+					OnChange: func(v string) {
+						fn = v
+						updateWindow()
+					},
+				},
+				&goey.HBox{Children: []base.Widget{
+					&goey.Button{Text: "Generate", Default: true, OnClick: func() {
+						generate()
+					}},
+				}},
+			},
+		},
+	}
+}
+
+func generate() {
+	s := phonenumber.Numbers(text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+	result = s
 	gr, err := util.OpenFont("goregular")
 	if err != nil {
 		fmt.Println("Error processing args", err)
 		return
 	}
-	grf := util.GetFontFace(*fontsize, 180, gr)
-	if err := phonenumber.DrawPhoneWithText(s, *fn, grf); err != nil {
-		log.Printf("Error: %s", err)
+	atoi, _ := strconv.Atoi(fontsize)
+	grf := util.GetFontFace(float64(atoi), 180, gr)
+	if err := phonenumber.DrawPhoneWithText(s, fn, grf); err != nil {
+		fmt.Printf("Error: %s\n", err)
 		return
 	}
-	log.Printf("Wrote: %s", *fn)
+	fmt.Printf("Wrote: %s\n", fn)
 }

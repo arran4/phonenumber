@@ -17,9 +17,9 @@ func TestLength(t *testing.T) {
 			wantP: 1,
 		},
 		{
-			name:  "b is 1",
+			name:  "b is 2",
 			s:     "b",
-			wantP: 1,
+			wantP: 2,
 		},
 		{
 			name:  "space is 1",
@@ -93,7 +93,21 @@ func TestNumbers(t *testing.T) {
 		s    string
 		want string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "abc",
+			s:    "abc",
+			want: "2 22 222",
+		},
+		{
+			name: "aei",
+			s:    "aei",
+			want: "233444",
+		},
+		{
+			name: "123",
+			s:    "123",
+			want: "122223333",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -7,7 +7,7 @@ require (
 	github.com/arran4/golang-wordwrap v0.0.0-20230506043234-83bc372c0110
 	github.com/google/go-cmp v0.5.9
 	github.com/tdewolff/canvas v0.0.0-20230503192432-76683a029c82
-	golang.org/x/image v0.6.0
+	golang.org/x/image v0.10.0
 )
 
 require (
@@ -28,7 +28,7 @@ require (
 	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
 	gitlab.com/stone.code/assert v0.0.0-20191212205015-97cac9777adf // indirect
 	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	gonum.org/v1/plot v0.12.0 // indirect
 	star-tex.org/x/tex v0.4.0 // indirect
 )

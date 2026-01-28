@@ -16,8 +16,13 @@ func MakeMap(s string) (result map[rune]string) {
 	runes := []rune(s)
 	for ri, r := range runes {
 		if r == '*' || unicode.IsNumber(r) {
-			for rsi, ers := range runes[p : ri+1] {
-				result[ers] = strings.Repeat(string([]rune{r}), rsi+1)
+			count := ri - p + 1
+			digitStr := string(r)
+			digitLen := len(digitStr)
+			fullStr := strings.Repeat(digitStr, count)
+			for i := 0; i < count; i++ {
+				length := (i + 1) * digitLen
+				result[runes[p+i]] = fullStr[:length]
 			}
 			p = ri + 1
 		}

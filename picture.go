@@ -11,23 +11,43 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"sync"
 )
 
-var fontFamily *canvas.FontFamily
+var (
+	fontFamily     *canvas.FontFamily
+	fontFamilyOnce sync.Once
+	fontFamilyErr  error
+)
 
 var (
 	//go:embed "phone.png"
 	phoneImageBytes []byte
+	phoneImage      canvas.Image
+	phoneImageOnce  sync.Once
+	phoneImageErr   error
 )
 
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
-	fontFamily = canvas.NewFontFamily("times")
-	if err := fontFamily.LoadLocalFont("NimbusRoman-Regular", canvas.FontRegular); err != nil {
-		return fmt.Errorf("loading font: %w", err)
+	fontFamilyOnce.Do(func() {
+		fontFamily = canvas.NewFontFamily("times")
+		if err := fontFamily.LoadLocalFont("NimbusRoman-Regular", canvas.FontRegular); err != nil {
+			fontFamilyErr = err
+		}
+	})
+	if fontFamilyErr != nil {
+		return fmt.Errorf("loading font: %w", fontFamilyErr)
 	}
-	phoneImage, err := canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
-	if err != nil {
-		return fmt.Errorf("loading phone image: %w", err)
+
+	phoneImageOnce.Do(func() {
+		var err error
+		phoneImage, err = canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
+		if err != nil {
+			phoneImageErr = err
+		}
+	})
+	if phoneImageErr != nil {
+		return fmt.Errorf("loading phone image: %w", phoneImageErr)
 	}
 	phoneBounds := phoneImage.Bounds()
 	width := float64(phoneBounds.Dx())
@@ -35,7 +55,7 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 
 	sw := wordwrap.NewSimpleWrapper(s, fce, wordwrap.HorizontalCenterLines)
 
-	ls, pt, err := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
+	ls, pt, _ := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
 	height += float64(pt.Y)
 
 	i := image.NewRGBA(image.Rect(0, 0, int(width), int(height)-phoneBounds.Max.Y))

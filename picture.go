@@ -11,13 +11,17 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"sync"
 )
 
 var fontFamily *canvas.FontFamily
 
 var (
 	//go:embed "phone.png"
-	phoneImageBytes []byte
+	phoneImageBytes   []byte
+	decodedPhoneImage canvas.Image
+	phoneImageOnce    sync.Once
+	phoneImageErr     error
 )
 
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
@@ -25,17 +29,19 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	if err := fontFamily.LoadLocalFont("NimbusRoman-Regular", canvas.FontRegular); err != nil {
 		return fmt.Errorf("loading font: %w", err)
 	}
-	phoneImage, err := canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
-	if err != nil {
-		return fmt.Errorf("loading phone image: %w", err)
+	phoneImageOnce.Do(func() {
+		decodedPhoneImage, phoneImageErr = canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
+	})
+	if phoneImageErr != nil {
+		return fmt.Errorf("loading phone image: %w", phoneImageErr)
 	}
-	phoneBounds := phoneImage.Bounds()
+	phoneBounds := decodedPhoneImage.Bounds()
 	width := float64(phoneBounds.Dx())
 	height := float64(phoneBounds.Dy())
 
 	sw := wordwrap.NewSimpleWrapper(s, fce, wordwrap.HorizontalCenterLines)
 
-	ls, pt, err := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
+	ls, pt, _ := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
 	height += float64(pt.Y)
 
 	i := image.NewRGBA(image.Rect(0, 0, int(width), int(height)-phoneBounds.Max.Y))
@@ -51,7 +57,7 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	ctx.Fill()
 
 	ctx.DrawImage((width-float64(i.Bounds().Dx()))/2, float64(phoneBounds.Dy()), i, canvas.Resolution(1))
-	ctx.DrawImage((width-float64(phoneBounds.Dx()))/2, 0, phoneImage, canvas.Resolution(1))
+	ctx.DrawImage((width-float64(phoneBounds.Dx()))/2, 0, decodedPhoneImage, canvas.Resolution(1))
 
 	if err := renderers.Write(fn, c); err != nil {
 		return fmt.Errorf("writing file %s: %w", fn, err)

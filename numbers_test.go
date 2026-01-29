@@ -141,3 +141,10 @@ func TestNumbers(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMakeMap(b *testing.B) {
+	s := "1abc2def3ghi4jkl5mno6pqrs7tuv8wxyz9+* 0"
+	for i := 0; i < b.N; i++ {
+		MakeMap(s)
+	}
+}

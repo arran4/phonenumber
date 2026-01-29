@@ -8,6 +8,7 @@ import (
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
 	"image"
 	"image/color"
 	"image/draw"
@@ -31,7 +32,7 @@ var (
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	fontFamilyOnce.Do(func() {
 		fontFamily = canvas.NewFontFamily("times")
-		if err := fontFamily.LoadLocalFont("NimbusRoman-Regular", canvas.FontRegular); err != nil {
+		if err := fontFamily.LoadFont(goregular.TTF, 0, canvas.FontRegular); err != nil {
 			fontFamilyErr = err
 		}
 	})

@@ -13,6 +13,8 @@ builds:
       - amd64
 archives:
   -
+    ids:
+      - drawphonegui
     format_overrides:
       - goos: windows
         formats:

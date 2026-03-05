@@ -31,6 +31,9 @@ builds:
       - amd64
 archives:
   -
+    ids:
+      - drawphonegui
+      - drawphonecli
     allow_different_binary_count: true
     formats:
       - tar.gz

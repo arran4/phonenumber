@@ -33,12 +33,15 @@ jobs:
         run: go mod download
       - name: Test
         run: go test ./...
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7
         with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
-          version: latest
-          args: release --rm-dist -f .goreleaser-linux.yml
+          # 'latest', 'nightly', or a semver
+          version: '~> v2'
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}

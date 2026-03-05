@@ -1,3 +1,4 @@
+version: 2
 project_name: phonenumber
 builds:
   -
@@ -17,6 +18,9 @@ builds:
     goarm:
       - 6
       - 7
+    ignore:
+      - goos: windows
+        goarch: arm
   -
     id: "drawphonegui"
     binary: "drawphonegui"
@@ -28,13 +32,16 @@ builds:
 archives:
   -
     allow_different_binary_count: true
+    formats:
+      - tar.gz
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
@@ -55,3 +62,14 @@ nfpms:
     release: 1
     section: default
     priority: extra
+
+brews:
+  -
+    repository:
+      owner: arran4
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}" # From Secrets.TAP_GITHUB_TOKEN update ci.yaml too to match
+      token_type: "github"
+      pull_request:
+        enabled: true
+        draft: false

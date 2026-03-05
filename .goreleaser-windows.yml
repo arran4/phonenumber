@@ -1,3 +1,4 @@
+version: 2
 project_name: phonenumberwin
 builds:
   -
@@ -14,14 +15,26 @@ archives:
   -
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 checksum:
   name_template: 'checksums-win.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
       - '^docs:'
       - '^test:'
+
+brews:
+  -
+    repository:
+      owner: arran4
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}" # From Secrets.TAP_GITHUB_TOKEN update ci.yaml too to match
+    branch: "{{.ProjectName}}-{{.Version}}"
+    pull_request:
+      enabled: true
+      draft: false

@@ -1,15 +1,13 @@
 module phonenumber
 
-go 1.24.0
-
-toolchain go1.24.9
+go 1.25.0
 
 require (
 	bitbucket.org/rj/goey v0.9.1-0.20220128211443-c35bd7e91150
 	github.com/arran4/golang-wordwrap v0.0.3
 	github.com/google/go-cmp v0.7.0
 	github.com/tdewolff/canvas v0.0.0-20230503192432-76683a029c82
-	golang.org/x/image v0.36.0
+	golang.org/x/image v0.38.0
 )
 
 require (
@@ -30,7 +28,7 @@ require (
 	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
 	gitlab.com/stone.code/assert v1.1.4 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	gonum.org/v1/plot v0.12.0 // indirect
 	star-tex.org/x/tex v0.4.0 // indirect
 )

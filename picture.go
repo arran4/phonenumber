@@ -69,7 +69,7 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	width := float64(phoneBounds.Dx())
 	height := float64(phoneBounds.Dy())
 
-	sw := wordwrap.NewSimpleWrapper(s, fce, wordwrap.HorizontalCenterLines)
+	sw := wordwrap.NewSimpleWrapper([]*wordwrap.Content{wordwrap.NewContent(s)}, fce, wordwrap.HorizontalCenterLines)
 
 	ls, pt, _ := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
 	height += float64(pt.Y)

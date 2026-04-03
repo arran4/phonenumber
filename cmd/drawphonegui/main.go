@@ -52,7 +52,10 @@ func createWindow() error {
 }
 
 func updateWindow() {
-	window.SetChild(renderWindow())
+	err := window.SetChild(renderWindow())
+	if err != nil {
+		fmt.Printf("Error setting child window: %s\n", err)
+	}
 }
 
 func renderWindow() base.Widget {

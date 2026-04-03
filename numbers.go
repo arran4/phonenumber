@@ -46,22 +46,22 @@ const OpDotPauses = "DotPauses"
 
 func Numbers(s string, ops ...any) string {
 	result := []rune(strings.Repeat(" ", Length(s)))
-	runes := []rune(s)
 	ignoreSpace := false
 	underscoreSpace := false
 	dotPauses := false
 	for _, op := range ops {
-		if op == OpIgnoreSpace {
+		switch op {
+		case OpIgnoreSpace:
 			ignoreSpace = true
-		} else if op == OpUnderscoreSpace {
+		case OpUnderscoreSpace:
 			underscoreSpace = true
-		} else if op == OpDotPauses {
+		case OpDotPauses:
 			dotPauses = true
 		}
 	}
 	p := 0
 	var prev rune = 0
-	for _, r := range runes {
+	for _, r := range s {
 		if r == ' ' {
 			if ignoreSpace {
 				p++
@@ -98,9 +98,8 @@ func Numbers(s string, ops ...any) string {
 }
 
 func Length(s string) (p int) {
-	runes := []rune(s)
 	var prev rune = 0
-	for _, r := range runes {
+	for _, r := range s {
 		lcr := unicode.ToLower(r)
 		s, ok := lookup[lcr]
 		if !ok {

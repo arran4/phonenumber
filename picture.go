@@ -44,6 +44,7 @@ var (
 	phoneImageErr   error
 )
 
+// DrawPhoneWithText draws the phone and the generated key sequence text to the given output filename.
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	fontFamilyOnce.Do(func() {
 		fontFamily = canvas.NewFontFamily("times")

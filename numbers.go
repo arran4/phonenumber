@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Package phonenumber provides functionality for generating and drawing Nokia-style phone number key sequences.
 package phonenumber
 
 import (
@@ -25,6 +26,7 @@ var (
 	lookup = MakeMap(seq)
 )
 
+// MakeMap creates a lookup map from a character sequence definition.
 func MakeMap(s string) (result map[rune]string) {
 	result = map[rune]string{}
 	p := 0
@@ -40,28 +42,34 @@ func MakeMap(s string) (result map[rune]string) {
 	return
 }
 
+// OpIgnoreSpace defines an option to ignore spaces when translating.
 const OpIgnoreSpace = "IgnoreSpace"
+
+// OpUnderscoreSpace defines an option to use underscores for spaces.
 const OpUnderscoreSpace = "UnderscoreSpace"
+
+// OpDotPauses defines an option to use dots for pauses.
 const OpDotPauses = "DotPauses"
 
+// Numbers translates a string into its corresponding numeric key sequence.
 func Numbers(s string, ops ...any) string {
 	result := []rune(strings.Repeat(" ", Length(s)))
-	runes := []rune(s)
 	ignoreSpace := false
 	underscoreSpace := false
 	dotPauses := false
 	for _, op := range ops {
-		if op == OpIgnoreSpace {
+		switch op {
+		case OpIgnoreSpace:
 			ignoreSpace = true
-		} else if op == OpUnderscoreSpace {
+		case OpUnderscoreSpace:
 			underscoreSpace = true
-		} else if op == OpDotPauses {
+		case OpDotPauses:
 			dotPauses = true
 		}
 	}
 	p := 0
-	var prev rune = 0
-	for _, r := range runes {
+	var prev rune
+	for _, r := range s {
 		if r == ' ' {
 			if ignoreSpace {
 				p++
@@ -97,10 +105,10 @@ func Numbers(s string, ops ...any) string {
 	return string(result)
 }
 
+// Length calculates the required length of the translated string array.
 func Length(s string) (p int) {
-	runes := []rune(s)
-	var prev rune = 0
-	for _, r := range runes {
+	var prev rune
+	for _, r := range s {
 		lcr := unicode.ToLower(r)
 		s, ok := lookup[lcr]
 		if !ok {

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Package main provides a GUI for generating Nokia phone number images.
 package main
 
 import (
@@ -52,7 +53,7 @@ func createWindow() error {
 }
 
 func updateWindow() {
-	window.SetChild(renderWindow())
+	_ = window.SetChild(renderWindow())
 }
 
 func renderWindow() base.Widget {
@@ -61,7 +62,7 @@ func renderWindow() base.Widget {
 		Children: []goey.TabItem{
 			renderTab(),
 		},
-		OnChange: func(i int) {
+		OnChange: func(_ int) {
 			updateWindow()
 		},
 	}
@@ -84,7 +85,7 @@ func renderTab() goey.TabItem {
 						text = v
 						result = phonenumber.Numbers(v, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
 					},
-					OnEnterKey: func(value string) {
+					OnEnterKey: func(_ string) {
 						updateWindow()
 					},
 				},

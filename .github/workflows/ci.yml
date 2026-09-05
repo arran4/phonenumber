@@ -484,7 +484,7 @@ jobs:
           fi
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-
+            MODE="${{ inputs.mode }}"
             if [[ "$MODE" == "release-test" || "$MODE" == "release-rc" || "$MODE" == "release-alpha" ]]; then
               gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag" -f snapshot_mode=true
             else
@@ -527,7 +527,7 @@ jobs:
           version: '~> v2'
           args: >-
             release --clean -f .goreleaser-linux.yml
-            ${{ (github.event_name == 'workflow_dispatch' && inputs.snapshot_mode == true) && '--snapshot' || '' }}
+            ${{ ((github.event_name == 'workflow_dispatch' && inputs.snapshot_mode == true) || startsWith(needs.release-context.outputs.release_tag, 'test-') || startsWith(github.ref, 'refs/tags/test-')) && '--snapshot' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
@@ -571,6 +571,8 @@ jobs:
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ needs.release-context.outputs.release_tag }}
       - name: Upload Windows artifacts
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.snapshot_mode == true) && !startsWith(needs.release-context.outputs.release_tag, 'test-') }}
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

@@ -37,7 +37,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 	}
 
 	s := phonenumber.Numbers(*text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
-	fmt.Fprintf(stdout, "'%s'\n", s)
+	_, _ = fmt.Fprintf(stdout, "'%s'\n", s)
 
 	gr, err := util.OpenFont("goregular")
 	if err != nil {
@@ -48,7 +48,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 	if err := phonenumber.DrawPhoneWithText(s, *fn, grf); err != nil {
 		return fmt.Errorf("drawing phone: %w", err)
 	}
-	fmt.Fprintf(stdout, "Wrote: %s\n", *fn)
+	_, _ = fmt.Fprintf(stdout, "Wrote: %s\n", *fn)
 
 	return nil
 }
@@ -58,7 +58,7 @@ func main() {
 		if err == flag.ErrHelp {
 			os.Exit(0)
 		}
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 }

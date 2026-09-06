@@ -57,7 +57,9 @@ func TestDrawPhoneWithText(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to open generated file: %v", err)
 				}
-				defer f.Close()
+				defer func() {
+					_ = f.Close()
+				}()
 
 				img, err := png.Decode(f)
 				if err != nil {

@@ -20,33 +20,50 @@ import (
 	"flag"
 	"fmt"
 	"github.com/arran4/golang-wordwrap/util"
+	"io"
 	"os"
 	"phonenumber"
 )
 
-func main() {
-	fs := flag.NewFlagSet("", flag.ExitOnError)
+func run(args []string, stdout, stderr io.Writer) error {
+	fs := flag.NewFlagSet("drawphonecli", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	fn := fs.String("outfile", "out.png", "The output filename")
 	text := fs.String("text", "Hello how are you?", "Text to write")
 	fontsize := fs.Float64("fontsize", 12, "Font size")
-	if err := fs.Parse(os.Args); err != nil {
-		fmt.Println("Error processing args", err)
+
+	if err := fs.Parse(args); err != nil {
+		return err
 	}
-	if !fs.Parsed() {
-		return
-	}
-	flag.Parse()
+
 	s := phonenumber.Numbers(*text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
-	fmt.Printf("'%s'\n", s)
+	_, _ = fmt.Fprintf(stdout, "'%s'\n", s)
+
 	gr, err := util.OpenFont("goregular")
 	if err != nil {
-		fmt.Println("Error processing args", err)
-		return
+		return fmt.Errorf("loading font: %w", err)
 	}
 	grf := util.GetFontFace(*fontsize, 180, gr)
+
 	if err := phonenumber.DrawPhoneWithText(s, *fn, grf); err != nil {
-		fmt.Printf("Error: %s\n", err)
-		return
+		return fmt.Errorf("drawing phone: %w", err)
 	}
-	fmt.Printf("Wrote: %s\n", *fn)
+	_, _ = fmt.Fprintf(stdout, "Wrote: %s\n", *fn)
+
+	return nil
+}
+
+func execute() int {
+	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		return 1
+	}
+	return 0
+}
+
+func main() {
+	os.Exit(execute())
 }

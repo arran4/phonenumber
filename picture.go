@@ -23,17 +23,10 @@ import (
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers"
 	"golang.org/x/image/font"
-	"golang.org/x/image/font/gofont/goregular"
 	"image"
 	"image/color"
 	"image/draw"
 	"sync"
-)
-
-var (
-	fontFamily     *canvas.FontFamily
-	fontFamilyOnce sync.Once
-	fontFamilyErr  error
 )
 
 var (
@@ -46,16 +39,6 @@ var (
 
 // DrawPhoneWithText draws the phone and the generated key sequence text to the given output filename.
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
-	fontFamilyOnce.Do(func() {
-		fontFamily = canvas.NewFontFamily("times")
-		if err := fontFamily.LoadFont(goregular.TTF, 0, canvas.FontRegular); err != nil {
-			fontFamilyErr = err
-		}
-	})
-	if fontFamilyErr != nil {
-		return fmt.Errorf("loading font: %w", fontFamilyErr)
-	}
-
 	phoneImageOnce.Do(func() {
 		var err error
 		phoneImage, err = canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
@@ -72,13 +55,16 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 
 	sw := wordwrap.NewSimpleWrapper(s, fce, wordwrap.HorizontalCenterLines)
 
-	ls, pt, _ := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
+	ls, pt, err := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
+	if err != nil {
+		return fmt.Errorf("layout text: %w", err)
+	}
 	height += float64(pt.Y)
 
 	i := image.NewRGBA(image.Rect(0, 0, int(width), int(height)-phoneBounds.Max.Y))
 	draw.Draw(i, i.Bounds(), image.White, image.Pt(0, 0), draw.Over)
 	if err := sw.RenderLines(i, ls, i.Bounds().Min); err != nil {
-		return fmt.Errorf("")
+		return fmt.Errorf("rendering text lines: %w", err)
 	}
 
 	c := canvas.New(width, height)

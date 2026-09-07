@@ -2,13 +2,14 @@ package scripts
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os/exec"
 	"strings"
 	"testing"
 )
 
 func runRoute(t *testing.T, eventName, ref, refType, eventAction, inputsMode, eventSchedule string) map[string]string {
-	cmd := exec.Command("./ci_route.sh", eventName, ref, refType, eventAction, inputsMode, eventSchedule)
+	cmd := exec.Command("bash", "./ci_route.sh", eventName, ref, refType, eventAction, inputsMode, eventSchedule)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -30,12 +31,12 @@ func runRoute(t *testing.T, eventName, ref, refType, eventAction, inputsMode, ev
 }
 
 func runRouteWithError(t *testing.T, eventName, ref, refType, eventAction, inputsMode, eventSchedule string) error {
-	cmd := exec.Command("./ci_route.sh", eventName, ref, refType, eventAction, inputsMode, eventSchedule)
+	cmd := exec.Command("bash", "./ci_route.sh", eventName, ref, refType, eventAction, inputsMode, eventSchedule)
 	return cmd.Run()
 }
 
 func runSnapshot(t *testing.T, eventName, inputsSnapshotMode, releaseTag, ref string) string {
-	cmd := exec.Command("./ci_snapshot.sh", eventName, inputsSnapshotMode, releaseTag, ref)
+	cmd := exec.Command("bash", "./ci_snapshot.sh", eventName, inputsSnapshotMode, releaseTag, ref)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -52,7 +53,7 @@ func runSnapshot(t *testing.T, eventName, inputsSnapshotMode, releaseTag, ref st
 }
 
 func runWindowsUpload(t *testing.T, eventName, inputsSnapshotMode, releaseTag string) string {
-	cmd := exec.Command("./ci_windows_upload.sh", eventName, inputsSnapshotMode, releaseTag)
+	cmd := exec.Command("bash", "./ci_windows_upload.sh", eventName, inputsSnapshotMode, releaseTag)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -98,6 +99,16 @@ func TestPolicyManualReleasePublish(t *testing.T) {
 			t.Errorf("Mode %s: Expected run_code_checks=true, run_release=true, got %v", mode, res)
 		}
 	}
+
+	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatalf("Failed to read ci.yml: %v", err)
+	}
+	output := string(content)
+
+	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\" -f snapshot_mode=true") {
+		t.Errorf("Expected release context to invoke publish-tag with snapshot_mode=true")
+	}
 }
 
 func TestPolicyManualReleaseSnapshot(t *testing.T) {
@@ -111,6 +122,16 @@ func TestPolicyManualReleaseSnapshot(t *testing.T) {
 		if res["run_code_checks"] != "true" || res["run_release"] != "true" {
 			t.Errorf("Mode %s: Expected run_code_checks=true, run_release=true, got %v", mode, res)
 		}
+	}
+
+	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatalf("Failed to read ci.yml: %v", err)
+	}
+	output := string(content)
+
+	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\" -f snapshot_mode=true") {
+		t.Errorf("Expected release context to invoke publish-tag with snapshot_mode=true")
 	}
 }
 
@@ -174,15 +195,19 @@ func TestPolicyFailedChecks(t *testing.T) {
 	// - release validation fails or does not pass;
 	// - `release-context` cannot push/dispatch a release tag.
 	// We statically test this invariant by reading ci.yml and ensuring release-validation
-	// requires golangci, go-test, and go-vet.
-	cmd := exec.Command("grep", "-A", "2", "name: Release Validation Gate", "../.github/workflows/ci.yml")
-	out, err := cmd.CombinedOutput()
+	// requires golangci, go-test, and go-vet, and release-context requires release-validation.
+	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
 	if err != nil {
-		t.Fatalf("Failed to grep ci.yml: %v", err)
+		t.Fatalf("Failed to read ci.yml: %v", err)
 	}
-	output := string(out)
-	if !strings.Contains(output, "needs: [route, discover, prepare-release-tag, golangci, go-test, go-vet]") {
-		t.Errorf("Expected Release Validation Gate to depend on lint and tests, got: %s", output)
+	output := string(content)
+
+	if !strings.Contains(output, "name: Release Validation Gate\n    needs: [route, discover, prepare-release-tag, golangci, go-test, go-vet]") {
+		t.Errorf("Expected Release Validation Gate to depend on lint and tests")
+	}
+
+	if !strings.Contains(output, "name: Release Context & Gate\n    needs: [route, prepare-release-tag, release-validation]") {
+		t.Errorf("Expected Release Context & Gate to depend on release-validation")
 	}
 }
 
@@ -191,13 +216,17 @@ func TestPolicySingleOwner(t *testing.T) {
 	// - exactly one lane/tool owns GitHub Release creation.
 	// - Linux GoReleaser is the canonical publisher under the current architecture.
 	// - Windows must not independently publish the same release.
-	cmdLinux := exec.Command("cat", "../.github/workflows/ci.yml")
-	outLinux, _ := cmdLinux.CombinedOutput()
-	if !strings.Contains(string(outLinux), "release --clean -f .goreleaser-linux.yml") {
+	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatalf("Failed to read ci.yml: %v", err)
+	}
+	output := string(content)
+
+	if !strings.Contains(output, "release --clean -f .goreleaser-linux.yml") {
 		t.Errorf("Expected Linux to run release --clean")
 	}
 
-	if !strings.Contains(string(outLinux), "needs: [route, discover, release-context, goreleaser-linux]") {
+	if !strings.Contains(output, "needs: [route, discover, release-context, goreleaser-linux]") {
 		t.Errorf("Expected Windows to depend on goreleaser-linux")
 	}
 }

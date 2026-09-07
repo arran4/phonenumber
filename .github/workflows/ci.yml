@@ -204,17 +204,19 @@ jobs:
           EXPECT_DOCKER=false
           EXPECT_GORELEASER=true
 
-          echo "has_go=${EXPECT_GO:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_node=${EXPECT_NODE:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_dart=${EXPECT_DART:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_flutter=${EXPECT_FLUTTER:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_qt_cpp=${EXPECT_QT_CPP:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_make_c=${EXPECT_MAKE_C:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_docker=${EXPECT_DOCKER:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_goreleaser=${EXPECT_GORELEASER:-false}" >> "$GITHUB_OUTPUT"
+          {
+            echo "has_go=${EXPECT_GO:-false}"
+            echo "has_node=${EXPECT_NODE:-false}"
+            echo "has_dart=${EXPECT_DART:-false}"
+            echo "has_flutter=${EXPECT_FLUTTER:-false}"
+            echo "has_qt_cpp=${EXPECT_QT_CPP:-false}"
+            echo "has_make_c=${EXPECT_MAKE_C:-false}"
+            echo "has_docker=${EXPECT_DOCKER:-false}"
+            echo "has_goreleaser=${EXPECT_GORELEASER:-false}"
+          } >> "$GITHUB_OUTPUT"
 
-          ([[ -d test ]] || [[ -d tests ]] || [[ -f pubspec.yaml ]]) && echo "has_dart_or_flutter_tests=true" >> "$GITHUB_OUTPUT" || echo "has_dart_or_flutter_tests=false" >> "$GITHUB_OUTPUT"
-          ([[ -d packaging ]] || [[ -d pkg ]] || [[ -f debian/control ]]) && echo "has_packaging=true" >> "$GITHUB_OUTPUT" || echo "has_packaging=false" >> "$GITHUB_OUTPUT"
+          { [[ -d test ]] || [[ -d tests ]] || [[ -f pubspec.yaml ]]; } && echo "has_dart_or_flutter_tests=true" >> "$GITHUB_OUTPUT" || echo "has_dart_or_flutter_tests=false" >> "$GITHUB_OUTPUT"
+          { [[ -d packaging ]] || [[ -d pkg ]] || [[ -f debian/control ]]; } && echo "has_packaging=true" >> "$GITHUB_OUTPUT" || echo "has_packaging=false" >> "$GITHUB_OUTPUT"
 
       - id: profile
         shell: bash

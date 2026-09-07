@@ -104,10 +104,15 @@ func TestPolicyManualReleasePublish(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read ci.yml: %v", err)
 	}
-	output := string(content)
+	output := strings.ReplaceAll(string(content), "\r\n", "\n")
 
 	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\" -f snapshot_mode=true") {
 		t.Errorf("Expected release context to invoke publish-tag with snapshot_mode=true")
+	}
+
+	// And normal release should not dispatch with snapshot_mode=true
+	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\"\n") {
+		t.Errorf("Expected normal release context to invoke publish-tag without snapshot_mode=true")
 	}
 }
 
@@ -200,7 +205,7 @@ func TestPolicyFailedChecks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read ci.yml: %v", err)
 	}
-	output := string(content)
+	output := strings.ReplaceAll(string(content), "\r\n", "\n")
 
 	if !strings.Contains(output, "name: Release Validation Gate\n    needs: [route, discover, prepare-release-tag, golangci, go-test, go-vet]") {
 		t.Errorf("Expected Release Validation Gate to depend on lint and tests")
@@ -220,7 +225,7 @@ func TestPolicySingleOwner(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read ci.yml: %v", err)
 	}
-	output := string(content)
+	output := strings.ReplaceAll(string(content), "\r\n", "\n")
 
 	if !strings.Contains(output, "release --clean -f .goreleaser-linux.yml") {
 		t.Errorf("Expected Linux to run release --clean")

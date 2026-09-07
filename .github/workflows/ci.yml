@@ -433,7 +433,11 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             MODE="${{ inputs.mode }}"
-            if [[ "$MODE" == "release-test" || "$MODE" == "release-rc" || "$MODE" == "release-alpha" ]]; then
+
+            # Extract dispatch logic to testable script
+            DISPATCH_SNAPSHOT=$(./scripts/ci_dispatch_mode.sh "$MODE")
+
+            if [[ "$DISPATCH_SNAPSHOT" == "snapshot_mode=true" ]]; then
               gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag" -f snapshot_mode=true
             else
               gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag"

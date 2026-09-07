@@ -52,6 +52,23 @@ func runSnapshot(t *testing.T, eventName, inputsSnapshotMode, releaseTag, ref st
 	return ""
 }
 
+func runDispatchMode(t *testing.T, mode string) string {
+	cmd := exec.Command("bash", "./ci_dispatch_mode.sh", mode)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		t.Fatalf("ci_dispatch_mode.sh failed: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "snapshot_mode=") {
+			return strings.TrimPrefix(line, "snapshot_mode=")
+		}
+	}
+	return ""
+}
+
 func runWindowsUpload(t *testing.T, eventName, inputsSnapshotMode, releaseTag string) string {
 	cmd := exec.Command("bash", "./ci_windows_upload.sh", eventName, inputsSnapshotMode, releaseTag)
 	var out bytes.Buffer
@@ -98,21 +115,12 @@ func TestPolicyManualReleasePublish(t *testing.T) {
 		if res["run_code_checks"] != "true" || res["run_release"] != "true" {
 			t.Errorf("Mode %s: Expected run_code_checks=true, run_release=true, got %v", mode, res)
 		}
-	}
 
-	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
-	if err != nil {
-		t.Fatalf("Failed to read ci.yml: %v", err)
-	}
-	output := strings.ReplaceAll(string(content), "\r\n", "\n")
-
-	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\" -f snapshot_mode=true") {
-		t.Errorf("Expected release context to invoke publish-tag with snapshot_mode=true")
-	}
-
-	// And normal release should not dispatch with snapshot_mode=true
-	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\"\n") {
-		t.Errorf("Expected normal release context to invoke publish-tag without snapshot_mode=true")
+		// - normal release dispatch does not use snapshot_mode=true
+		dispatchSnap := runDispatchMode(t, mode)
+		if dispatchSnap != "false" {
+			t.Errorf("Mode %s: Expected dispatch snapshot_mode=false, got %v", mode, dispatchSnap)
+		}
 	}
 }
 
@@ -127,16 +135,12 @@ func TestPolicyManualReleaseSnapshot(t *testing.T) {
 		if res["run_code_checks"] != "true" || res["run_release"] != "true" {
 			t.Errorf("Mode %s: Expected run_code_checks=true, run_release=true, got %v", mode, res)
 		}
-	}
 
-	content, err := ioutil.ReadFile("../.github/workflows/ci.yml")
-	if err != nil {
-		t.Fatalf("Failed to read ci.yml: %v", err)
-	}
-	output := string(content)
-
-	if !strings.Contains(output, "gh workflow run \"ci.yml\" --ref \"$TAG\" -f mode=\"publish-tag\" -f snapshot_mode=true") {
-		t.Errorf("Expected release context to invoke publish-tag with snapshot_mode=true")
+		// - test/rc/alpha dispatch uses snapshot_mode=true
+		dispatchSnap := runDispatchMode(t, mode)
+		if dispatchSnap != "true" {
+			t.Errorf("Mode %s: Expected dispatch snapshot_mode=true, got %v", mode, dispatchSnap)
+		}
 	}
 }
 

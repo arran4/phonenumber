@@ -18,6 +18,8 @@ package main
 import (
 	"bytes"
 	"flag"
+	"image/png"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -63,6 +65,11 @@ func TestRun(t *testing.T) {
 			args:        []string{"-outfile", filepath.Join(tempDir, "specific.png"), "-text", "abc"},
 			outContains: "'2.22.222'\n",
 		},
+		{
+			name:        "custom fontsize",
+			args:        []string{"-outfile", filepath.Join(tempDir, "fontsize.png"), "-fontsize", "24"},
+			outContains: "Wrote:",
+		},
 	}
 
 	for _, tt := range tests {
@@ -91,5 +98,105 @@ func TestRun(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestExecuteExitStatus(t *testing.T) {
+	tempDir := t.TempDir()
+
+	tests := []struct {
+		name         string
+		args         []string
+		expectedCode int
+	}{
+		{
+			name:         "help flag returns 0",
+			args:         []string{"-h"},
+			expectedCode: 0,
+		},
+		{
+			name:         "invalid flag returns 1",
+			args:         []string{"-invalidflag"},
+			expectedCode: 1,
+		},
+		{
+			name:         "valid args return 0",
+			args:         []string{"-outfile", filepath.Join(tempDir, "execute_success.png")},
+			expectedCode: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Mock os.Args
+			importArgs := append([]string{"drawphonecli"}, tt.args...)
+
+			// We need to temporarily replace os.Args
+			oldArgs := os.Args
+			defer func() { os.Args = oldArgs }()
+			os.Args = importArgs
+
+			// Capture stdout and stderr to avoid spamming the test output
+			oldStdout := os.Stdout
+			oldStderr := os.Stderr
+			defer func() {
+				os.Stdout = oldStdout
+				os.Stderr = oldStderr
+			}()
+
+			code := execute()
+			if code != tt.expectedCode {
+				t.Errorf("expected exit code %d, got %d", tt.expectedCode, code)
+			}
+		})
+	}
+}
+
+func TestFontSizeStructuralDifference(t *testing.T) {
+	tempDir := t.TempDir()
+
+	outSmall := filepath.Join(tempDir, "small.png")
+	outLarge := filepath.Join(tempDir, "large.png")
+
+	// Render small text
+	var stdout1, stderr1 bytes.Buffer
+	err := run([]string{"-outfile", outSmall, "-fontsize", "10", "-text", "Hello"}, &stdout1, &stderr1)
+	if err != nil {
+		t.Fatalf("failed to run small text: %v", err)
+	}
+
+	// Render large text
+	var stdout2, stderr2 bytes.Buffer
+	err = run([]string{"-outfile", outLarge, "-fontsize", "100", "-text", "Hello"}, &stdout2, &stderr2)
+	if err != nil {
+		t.Fatalf("failed to run large text: %v", err)
+	}
+
+	fSmall, err := os.Open(outSmall)
+	if err != nil {
+		t.Fatalf("failed to open small png: %v", err)
+	}
+	defer func() { _ = fSmall.Close() }()
+	imgSmall, err := png.Decode(fSmall)
+	if err != nil {
+		t.Fatalf("failed to decode small png: %v", err)
+	}
+
+	fLarge, err := os.Open(outLarge)
+	if err != nil {
+		t.Fatalf("failed to open large png: %v", err)
+	}
+	defer func() { _ = fLarge.Close() }()
+	imgLarge, err := png.Decode(fLarge)
+	if err != nil {
+		t.Fatalf("failed to decode large png: %v", err)
+	}
+
+	// Since "Hello" with size 10 vs 100 might word-wrap differently:
+	// A much larger font size will either be taller overall, or significantly wider overall/scale text area.
+	// We'll check the text drawing area bounds difference if they are different heights.
+	// Actually word-wrapping means large font might take multiple lines, so it should be taller
+	if imgLarge.Bounds().Dy() == imgSmall.Bounds().Dy() {
+		t.Errorf("expected font sizes to result in different image dimensions (height). Both are: %d", imgLarge.Bounds().Dy())
 	}
 }

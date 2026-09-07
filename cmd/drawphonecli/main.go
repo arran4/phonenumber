@@ -53,12 +53,17 @@ func run(args []string, stdout, stderr io.Writer) error {
 	return nil
 }
 
-func main() {
+func execute() int {
 	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {
 		if err == flag.ErrHelp {
-			os.Exit(0)
+			return 0
 		}
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
+}
+
+func main() {
+	os.Exit(execute())
 }

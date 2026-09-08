@@ -78,81 +78,17 @@ jobs:
       is_monthly: ${{ steps.route.outputs.is_monthly }}
       is_nightly: ${{ steps.route.outputs.is_nightly }}
     steps:
+      - uses: actions/checkout@v4
       - id: route
         shell: bash
         run: |
-          set -euo pipefail
-
-          run_code_checks=false
-          run_pr_meta_checks=false
-          run_cleanup=false
-          run_release=false
-          run_post_release=false
-          is_monthly=false
-          is_nightly=false
-
-          case "${{ github.event_name }}" in
-            push)
-              run_code_checks=true
-              if [[ "${{ github.ref }}" == refs/tags/v* || "${{ github.ref }}" == refs/tags/test-* ]]; then
-                run_release=true
-              fi
-              ;;
-            pull_request)
-              if [[ "${{ github.event.action }}" == "closed" ]]; then
-                run_cleanup=true
-              else
-                run_pr_meta_checks=true
-                run_code_checks=true
-              fi
-              ;;
-            workflow_dispatch)
-              case "${{ inputs.mode }}" in
-                lint-fix)
-                  run_code_checks=true
-                  is_nightly=true
-                  ;;
-                build)
-                  run_code_checks=true
-                  ;;
-                release-*)
-                  run_code_checks=true
-                  run_release=true
-                  ;;
-                publish-tag)
-                  if [[ "${{ github.ref_type }}" != "tag" || (! "${{ github.ref }}" =~ ^refs/tags/v.* && ! "${{ github.ref }}" =~ ^refs/tags/test-.*) ]]; then
-                    echo "publish-tag mode requires an eligible tag context" >&2
-                    exit 1
-                  fi
-                  run_code_checks=true
-                  run_release=true
-                  ;;
-                monthly-maintenance)
-                  run_code_checks=true
-                  is_monthly=true
-                  ;;
-              esac
-              ;;
-            schedule)
-              run_code_checks=true
-              if [[ "${{ github.event.schedule }}" == "17 3 1 * *" ]]; then
-                is_monthly=true
-              else
-                is_nightly=true
-              fi
-              ;;
-            release)
-              run_post_release=true
-              ;;
-          esac
-
-          echo "run_code_checks=$run_code_checks" >> "$GITHUB_OUTPUT"
-          echo "run_pr_meta_checks=$run_pr_meta_checks" >> "$GITHUB_OUTPUT"
-          echo "run_cleanup=$run_cleanup" >> "$GITHUB_OUTPUT"
-          echo "run_release=$run_release" >> "$GITHUB_OUTPUT"
-          echo "run_post_release=$run_post_release" >> "$GITHUB_OUTPUT"
-          echo "is_monthly=$is_monthly" >> "$GITHUB_OUTPUT"
-          echo "is_nightly=$is_nightly" >> "$GITHUB_OUTPUT"
+          ./scripts/ci_route.sh \
+            "${{ github.event_name }}" \
+            "${{ github.ref }}" \
+            "${{ github.ref_type }}" \
+            "${{ github.event.action }}" \
+            "${{ inputs.mode }}" \
+            "${{ github.event.schedule }}" >> "$GITHUB_OUTPUT"
 
   prepare-release-tag:
     name: Prepare release tag
@@ -268,17 +204,19 @@ jobs:
           EXPECT_DOCKER=false
           EXPECT_GORELEASER=true
 
-          echo "has_go=${EXPECT_GO:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_node=${EXPECT_NODE:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_dart=${EXPECT_DART:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_flutter=${EXPECT_FLUTTER:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_qt_cpp=${EXPECT_QT_CPP:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_make_c=${EXPECT_MAKE_C:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_docker=${EXPECT_DOCKER:-false}" >> "$GITHUB_OUTPUT"
-          echo "has_goreleaser=${EXPECT_GORELEASER:-false}" >> "$GITHUB_OUTPUT"
+          {
+            echo "has_go=${EXPECT_GO:-false}"
+            echo "has_node=${EXPECT_NODE:-false}"
+            echo "has_dart=${EXPECT_DART:-false}"
+            echo "has_flutter=${EXPECT_FLUTTER:-false}"
+            echo "has_qt_cpp=${EXPECT_QT_CPP:-false}"
+            echo "has_make_c=${EXPECT_MAKE_C:-false}"
+            echo "has_docker=${EXPECT_DOCKER:-false}"
+            echo "has_goreleaser=${EXPECT_GORELEASER:-false}"
+          } >> "$GITHUB_OUTPUT"
 
-          ([[ -d test ]] || [[ -d tests ]] || [[ -f pubspec.yaml ]]) && echo "has_dart_or_flutter_tests=true" >> "$GITHUB_OUTPUT" || echo "has_dart_or_flutter_tests=false" >> "$GITHUB_OUTPUT"
-          ([[ -d packaging ]] || [[ -d pkg ]] || [[ -f debian/control ]]) && echo "has_packaging=true" >> "$GITHUB_OUTPUT" || echo "has_packaging=false" >> "$GITHUB_OUTPUT"
+          { [[ -d test ]] || [[ -d tests ]] || [[ -f pubspec.yaml ]]; } && echo "has_dart_or_flutter_tests=true" >> "$GITHUB_OUTPUT" || echo "has_dart_or_flutter_tests=false" >> "$GITHUB_OUTPUT"
+          { [[ -d packaging ]] || [[ -d pkg ]] || [[ -f debian/control ]]; } && echo "has_packaging=true" >> "$GITHUB_OUTPUT" || echo "has_packaging=false" >> "$GITHUB_OUTPUT"
 
       - id: profile
         shell: bash
@@ -310,6 +248,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/dependency-review-action@v4
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
 
   golangci:
     name: lint
@@ -360,6 +306,8 @@ jobs:
         run: go mod download
       - name: Test
         run: go test ./... -v
+      - name: Policy Tests
+        run: cd scripts && go test -v ./...
 
   go-vet:
     name: Go vet
@@ -485,7 +433,11 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             MODE="${{ inputs.mode }}"
-            if [[ "$MODE" == "release-test" || "$MODE" == "release-rc" || "$MODE" == "release-alpha" ]]; then
+
+            # Extract dispatch logic to testable script
+            DISPATCH_SNAPSHOT=$(./scripts/ci_dispatch_mode.sh "$MODE")
+
+            if [[ "$DISPATCH_SNAPSHOT" == "snapshot_mode=true" ]]; then
               gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag" -f snapshot_mode=true
             else
               gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag"
@@ -520,6 +472,15 @@ jobs:
             ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       - name: sys Deps
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev build-essential
+      - name: Determine snapshot mode
+        id: snapshot
+        shell: bash
+        run: |
+          ./scripts/ci_snapshot.sh \
+            "${{ github.event_name }}" \
+            "${{ inputs.snapshot_mode }}" \
+            "${{ needs.release-context.outputs.release_tag }}" \
+            "${{ github.ref }}" >> "$GITHUB_OUTPUT"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -527,7 +488,7 @@ jobs:
           version: '~> v2'
           args: >-
             release --clean -f .goreleaser-linux.yml
-            ${{ ((github.event_name == 'workflow_dispatch' && inputs.snapshot_mode == true) || startsWith(needs.release-context.outputs.release_tag, 'test-') || startsWith(github.ref, 'refs/tags/test-')) && '--snapshot' || '' }}
+            ${{ steps.snapshot.outputs.is_snapshot == 'true' && '--snapshot' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
@@ -558,6 +519,14 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Determine upload mode
+        id: windows_upload
+        shell: bash
+        run: |
+          ./scripts/ci_windows_upload.sh \
+            "${{ github.event_name }}" \
+            "${{ inputs.snapshot_mode }}" \
+            "${{ needs.release-context.outputs.release_tag }}" >> "$GITHUB_OUTPUT"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -571,7 +540,7 @@ jobs:
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ needs.release-context.outputs.release_tag }}
       - name: Upload Windows artifacts
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.snapshot_mode == true) && !startsWith(needs.release-context.outputs.release_tag, 'test-') }}
+        if: ${{ steps.windows_upload.outputs.windows_upload == 'true' }}
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

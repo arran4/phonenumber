@@ -290,7 +290,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Cache-Go
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/go/pkg/mod
@@ -461,7 +461,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Cache-Go
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/go/pkg/mod
@@ -510,7 +510,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Cache-Go
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/go/pkg/mod

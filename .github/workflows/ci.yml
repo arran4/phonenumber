@@ -78,7 +78,7 @@ jobs:
       is_monthly: ${{ steps.route.outputs.is_monthly }}
       is_nightly: ${{ steps.route.outputs.is_nightly }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: route
         shell: bash
         run: |
@@ -253,7 +253,7 @@ jobs:
     name: actionlint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: actionlint
         uses: raven-actions/actionlint@v2
 

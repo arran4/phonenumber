@@ -247,7 +247,7 @@ jobs:
     if: ${{ needs.discover.outputs.profile == 'public' && github.event_name == 'pull_request' && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@v5
 
   actionlint:
     name: actionlint

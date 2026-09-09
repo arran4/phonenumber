@@ -26,13 +26,14 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"image/png"
 	"sync"
 )
 
 var (
 	//go:embed "phone.png"
 	phoneImageBytes []byte
-	phoneImage      canvas.Image
+	phoneImage      image.Image
 	phoneImageOnce  sync.Once
 	phoneImageErr   error
 )
@@ -41,7 +42,7 @@ var (
 func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	phoneImageOnce.Do(func() {
 		var err error
-		phoneImage, err = canvas.NewPNGImage(bytes.NewReader(phoneImageBytes))
+		phoneImage, err = png.Decode(bytes.NewReader(phoneImageBytes))
 		if err != nil {
 			phoneImageErr = err
 		}
@@ -53,7 +54,7 @@ func DrawPhoneWithText(s string, fn string, fce font.Face) error {
 	width := float64(phoneBounds.Dx())
 	height := float64(phoneBounds.Dy())
 
-	sw := wordwrap.NewSimpleWrapper(s, fce, wordwrap.HorizontalCenterLines)
+	sw := wordwrap.NewSimpleWrapper([]*wordwrap.Content{wordwrap.NewContent(s)}, fce, wordwrap.HorizontalCenterLines)
 
 	ls, pt, err := sw.TextToRect(phoneBounds, wordwrap.FitterIgnoreY{})
 	if err != nil {

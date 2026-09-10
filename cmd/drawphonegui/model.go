@@ -1,3 +1,5 @@
+//go:build !headless
+
 // Copyright (C) 2025 arran4
 //
 // This program is free software: you can redistribute it and/or modify

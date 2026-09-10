@@ -102,16 +102,21 @@ func TestMakeMap(t *testing.T) {
 	}
 }
 
-func TestNumbers(t *testing.T) {
+func TestConvert(t *testing.T) {
 	tests := []struct {
 		name string
 		s    string
 		want string
-		args []any
+		args []Option
 	}{
 		{
 			name: "abc",
 			s:    "abc",
+			want: "2 22 222",
+		},
+		{
+			name: "Uppercase ABC",
+			s:    "ABC",
 			want: "2 22 222",
 		},
 		{
@@ -133,6 +138,72 @@ func TestNumbers(t *testing.T) {
 			name: "Spaces Ignore spaces",
 			s:    "a d gj",
 			want: "2 3 45",
+			args: []Option{WithIgnoreSpace()},
+		},
+		{
+			name: "Underscore spaces",
+			s:    "a d gj",
+			want: "2_3_45",
+			args: []Option{WithUnderscoreSpace()},
+		},
+		{
+			name: "Dot pauses",
+			s:    "hello",
+			want: "4433555.555666",
+			args: []Option{WithDotPauses()},
+		},
+		{
+			name: "Pass through unknowns",
+			s:    "hello?",
+			want: "4433555 555666?",
+		},
+		{
+			name: "Unicode outside mapping",
+			s:    "aπb",
+			want: "2π22",
+		},
+		{
+			name: "+ and *",
+			s:    "+*",
+			want: "* **",
+		},
+		{
+			name: "Empty string",
+			s:    "",
+			want: "",
+		},
+		{
+			name: "All options",
+			s:    "hello world",
+			want: "4433555.555666 96667775553",
+			args: []Option{WithIgnoreSpace(), WithUnderscoreSpace(), WithDotPauses()},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Convert(tt.s, tt.args...); got != tt.want {
+				t.Errorf("Convert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNumbers(t *testing.T) {
+	tests := []struct {
+		name string
+		s    string
+		want string
+		args []any
+	}{
+		{
+			name: "abc",
+			s:    "abc",
+			want: "2 22 222",
+		},
+		{
+			name: "Spaces Ignore spaces",
+			s:    "a d gj",
+			want: "2 3 45",
 			args: []any{OpIgnoreSpace},
 		},
 		{
@@ -142,10 +213,16 @@ func TestNumbers(t *testing.T) {
 			args: []any{OpDotPauses},
 		},
 		{
-			name: "Pass through unknowns",
-			s:    "hello?",
-			want: "4433555 555666?",
-			args: []any{},
+			name: "Underscore space",
+			s:    "a b",
+			want: "2_22",
+			args: []any{OpUnderscoreSpace},
+		},
+		{
+			name: "Unknown options ignored",
+			s:    "a b",
+			want: "2022",
+			args: []any{"SomeUnknownOption", 123},
 		},
 	}
 	for _, tt := range tests {
@@ -155,4 +232,36 @@ func TestNumbers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzConvertAndNumbers(f *testing.F) {
+	f.Add("hello world")
+	f.Add("abc 123 !@#")
+	f.Add("")
+	f.Add("A π C")
+
+	f.Fuzz(func(t *testing.T, s string) {
+		// Test no panics for arbitrary UTF-8
+		_ = Convert(s)
+		_ = Convert(s, WithIgnoreSpace())
+		_ = Convert(s, WithUnderscoreSpace())
+		_ = Convert(s, WithDotPauses())
+
+		// Test equivalence between legacy Numbers and new Convert
+		if got, want := Numbers(s), Convert(s); got != want {
+			t.Errorf("Numbers(%q) != Convert(%q): %v != %v", s, s, got, want)
+		}
+		if got, want := Numbers(s, OpIgnoreSpace), Convert(s, WithIgnoreSpace()); got != want {
+			t.Errorf("Numbers(%q, OpIgnoreSpace) != Convert(...): %v != %v", s, got, want)
+		}
+		if got, want := Numbers(s, OpUnderscoreSpace), Convert(s, WithUnderscoreSpace()); got != want {
+			t.Errorf("Numbers(%q, OpUnderscoreSpace) != Convert(...): %v != %v", s, got, want)
+		}
+		if got, want := Numbers(s, OpDotPauses), Convert(s, WithDotPauses()); got != want {
+			t.Errorf("Numbers(%q, OpDotPauses) != Convert(...): %v != %v", s, got, want)
+		}
+		if got, want := Numbers(s, OpIgnoreSpace, OpDotPauses), Convert(s, WithIgnoreSpace(), WithDotPauses()); got != want {
+			t.Errorf("Numbers(...) != Convert(...): %v != %v", got, want)
+		}
+	})
 }

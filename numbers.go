@@ -42,40 +42,68 @@ func MakeMap(s string) (result map[rune]string) {
 	return
 }
 
+// options holds the configuration for conversion.
+type options struct {
+	ignoreSpace     bool
+	underscoreSpace bool
+	dotPauses       bool
+}
+
+// Option defines a type-safe functional option for configuring text conversion.
+type Option func(*options)
+
+// WithIgnoreSpace returns an option to ignore spaces when translating.
+func WithIgnoreSpace() Option {
+	return func(o *options) {
+		o.ignoreSpace = true
+	}
+}
+
+// WithUnderscoreSpace returns an option to use underscores for spaces.
+func WithUnderscoreSpace() Option {
+	return func(o *options) {
+		o.underscoreSpace = true
+	}
+}
+
+// WithDotPauses returns an option to use dots for pauses.
+func WithDotPauses() Option {
+	return func(o *options) {
+		o.dotPauses = true
+	}
+}
+
 // OpIgnoreSpace defines an option to ignore spaces when translating.
+//
+// Deprecated: Use WithIgnoreSpace() with Convert instead.
 const OpIgnoreSpace = "IgnoreSpace"
 
 // OpUnderscoreSpace defines an option to use underscores for spaces.
+//
+// Deprecated: Use WithUnderscoreSpace() with Convert instead.
 const OpUnderscoreSpace = "UnderscoreSpace"
 
 // OpDotPauses defines an option to use dots for pauses.
+//
+// Deprecated: Use WithDotPauses() with Convert instead.
 const OpDotPauses = "DotPauses"
 
-// Numbers translates a string into its corresponding numeric key sequence.
-func Numbers(s string, ops ...any) string {
-	result := []rune(strings.Repeat(" ", Length(s)))
-	ignoreSpace := false
-	underscoreSpace := false
-	dotPauses := false
-	for _, op := range ops {
-		switch op {
-		case OpIgnoreSpace:
-			ignoreSpace = true
-		case OpUnderscoreSpace:
-			underscoreSpace = true
-		case OpDotPauses:
-			dotPauses = true
-		}
+// Convert translates a string into its corresponding numeric key sequence using a type-safe API.
+func Convert(s string, opts ...Option) string {
+	var config options
+	for _, opt := range opts {
+		opt(&config)
 	}
+	result := []rune(strings.Repeat(" ", Length(s)))
 	p := 0
 	var prev rune
 	for _, r := range s {
 		if r == ' ' {
-			if ignoreSpace {
+			if config.ignoreSpace {
 				p++
 				prev = r
 				continue
-			} else if underscoreSpace {
+			} else if config.underscoreSpace {
 				result[p] = '_'
 				p++
 				prev = r
@@ -83,26 +111,44 @@ func Numbers(s string, ops ...any) string {
 			}
 		}
 		lcr := unicode.ToLower(r)
-		s, ok := lookup[lcr]
+		lookupStr, ok := lookup[lcr]
 		if !ok {
 			result[p] = r
 			p++
 			prev = r
 			continue
 		}
-		if prev == rune(s[0]) {
-			if dotPauses {
+		if prev == rune(lookupStr[0]) {
+			if config.dotPauses {
 				result[p] = '.'
 			} else {
 				result[p] = ' '
 			}
 			p++
 		}
-		prev = rune(s[0])
-		copy(result[p:], []rune(s))
-		p += len(s)
+		prev = rune(lookupStr[0])
+		copy(result[p:], []rune(lookupStr))
+		p += len(lookupStr)
 	}
 	return string(result)
+}
+
+// Numbers translates a string into its corresponding numeric key sequence.
+//
+// Deprecated: Use Convert with type-safe Option builders instead.
+func Numbers(s string, ops ...any) string {
+	var opts []Option
+	for _, op := range ops {
+		switch op {
+		case OpIgnoreSpace:
+			opts = append(opts, WithIgnoreSpace())
+		case OpUnderscoreSpace:
+			opts = append(opts, WithUnderscoreSpace())
+		case OpDotPauses:
+			opts = append(opts, WithDotPauses())
+		}
+	}
+	return Convert(s, opts...)
 }
 
 // Length calculates the required length of the translated string array.

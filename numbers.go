@@ -91,15 +91,15 @@ const OpDotPauses = "DotPauses"
 // Convert translates a string into its corresponding numeric key sequence using a type-safe API.
 //
 // Default Behaviour:
+// - Case-folding: Uppercase mapped characters are treated equivalently to their lowercase counterparts (e.g. 'A' and 'a' both translate to "2").
+// - Input digits: Input digits map to their equivalent repeating sequence based on their position on the keypad (e.g. '2' translates to "2222", '1' translates to "1").
 // - Space characters (' ') are mapped to '0' (since the Nokia '0' key represents space).
 // - Unknown punctuation or characters not present in the Nokia keypad are passed through as literal runes.
 //
 // Option Interactions & Precedence:
 // - WithIgnoreSpace(): Ignores the default mapping to '0' and retains literal spaces (' '). Takes highest precedence over WithUnderscoreSpace().
 // - WithUnderscoreSpace(): Replaces spaces with underscores ('_') instead of mapping to '0'.
-//   - WithDotPauses(): When identical digits are repeated sequentially due to adjacent characters mapping
-//     to the same keypad key, a pause is inserted between them. By default, this pause is a space (' ').
-//     WithDotPauses() alters this pause character to a dot ('.').
+// - WithDotPauses(): When identical digits are repeated sequentially due to adjacent characters mapping to the same keypad key (e.g. "hi" maps to "44444"), a pause is inserted between them (e.g. "44 444"). By default, this pause is a space (' '). WithDotPauses() alters this pause character to a dot ('.').
 func Convert(s string, opts ...Option) string {
 	var config options
 	for _, opt := range opts {

@@ -89,6 +89,17 @@ const OpUnderscoreSpace = "UnderscoreSpace"
 const OpDotPauses = "DotPauses"
 
 // Convert translates a string into its corresponding numeric key sequence using a type-safe API.
+//
+// Default Behaviour:
+// - Space characters (' ') are mapped to '0' (since the Nokia '0' key represents space).
+// - Unknown punctuation or characters not present in the Nokia keypad are passed through as literal runes.
+//
+// Option Interactions & Precedence:
+// - WithIgnoreSpace(): Ignores the default mapping to '0' and retains literal spaces (' '). Takes highest precedence over WithUnderscoreSpace().
+// - WithUnderscoreSpace(): Replaces spaces with underscores ('_') instead of mapping to '0'.
+//   - WithDotPauses(): When identical digits are repeated sequentially due to adjacent characters mapping
+//     to the same keypad key, a pause is inserted between them. By default, this pause is a space (' ').
+//     WithDotPauses() alters this pause character to a dot ('.').
 func Convert(s string, opts ...Option) string {
 	var config options
 	for _, opt := range opts {

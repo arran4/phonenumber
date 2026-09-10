@@ -22,23 +22,20 @@ import (
 	"bitbucket.org/rj/goey/loop"
 	"bitbucket.org/rj/goey/windows"
 	"fmt"
-	"github.com/arran4/golang-wordwrap/util"
-	"phonenumber"
-	"strconv"
+	"os"
 )
 
 var (
-	window   *windows.Window
-	fn       = "out.png"
-	text     = "Hello how are you?"
-	result   = phonenumber.Numbers(text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
-	fontsize = "12"
+	window *windows.Window
+	model  *AppModel
 )
 
 func main() {
+	model = NewAppModel()
 	err := loop.Run(createWindow)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Fprintf(os.Stderr, "Error running GUI loop: %v\n", err)
+		os.Exit(1)
 	}
 }
 
@@ -53,7 +50,11 @@ func createWindow() error {
 }
 
 func updateWindow() {
-	_ = window.SetChild(renderWindow())
+	if window != nil {
+		if err := window.SetChild(renderWindow()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error updating window: %v\n", err)
+		}
+	}
 }
 
 func renderWindow() base.Widget {
@@ -73,44 +74,60 @@ func renderWindow() base.Widget {
 }
 
 func renderTab() goey.TabItem {
+	var statusWidget base.Widget
+	if model.Error != nil {
+		statusWidget = &goey.Label{Text: fmt.Sprintf("Error: %v", model.Error)}
+	} else if model.Status != "" {
+		statusWidget = &goey.Label{Text: model.Status}
+	} else {
+		statusWidget = &goey.Label{Text: ""}
+	}
+
 	return goey.TabItem{
-		Caption: "Configuration / Authentication",
+		Caption: "Configuration",
 		Child: &goey.VBox{
 			Children: []base.Widget{
 				&goey.Label{Text: "Text:"},
 				&goey.TextInput{
-					Value:       text,
-					Placeholder: "Hidden",
+					Value:       model.Text,
+					Placeholder: "Enter text to convert...",
 					OnChange: func(v string) {
-						text = v
-						result = phonenumber.Numbers(v, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+						model.UpdateText(v)
+						updateWindow()
 					},
 					OnEnterKey: func(_ string) {
 						updateWindow()
 					},
 				},
-				&goey.Label{Text: "Result: (Press enter above to refresh)"},
+				&goey.Label{Text: "Result:"},
 				&goey.TextInput{
-					Value:       result,
-					Placeholder: "Hidden",
+					Value:       model.Result,
+					Placeholder: "Result will appear here...",
 					Disabled:    true,
 				},
 				&goey.Label{Text: "Font size:"},
 				&goey.TextInput{
-					Value:       fontsize,
-					Placeholder: "Hidden",
+					Value:       model.FontSizeText,
+					Placeholder: "e.g., 12",
 					OnChange: func(v string) {
-						fontsize = v
+						model.UpdateFontSize(v)
 						updateWindow()
 					},
 				},
 				&goey.Label{Text: "Output filename:"},
-				&goey.TextInput{
-					Value:       fn,
-					Placeholder: "Hidden",
-					OnChange: func(v string) {
-						fn = v
-						updateWindow()
+				&goey.HBox{
+					Children: []base.Widget{
+						&goey.TextInput{
+							Value:       model.Filename,
+							Placeholder: "e.g., out.png",
+							OnChange: func(v string) {
+								model.UpdateFilename(v)
+								updateWindow()
+							},
+						},
+						&goey.Button{Text: "Browse...", OnClick: func() {
+							browseFile()
+						}},
 					},
 				},
 				&goey.HBox{Children: []base.Widget{
@@ -118,24 +135,48 @@ func renderTab() goey.TabItem {
 						generate()
 					}},
 				}},
+				statusWidget,
 			},
 		},
 	}
 }
 
-func generate() {
-	s := phonenumber.Numbers(text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
-	result = s
-	gr, err := util.OpenFont("goregular")
+func browseFile() {
+	if window == nil {
+		return
+	}
+	dlg := window.SaveFileDialog().
+		WithTitle("Select Output File").
+		WithFilename(model.Filename).
+		AddFilter("PNG Images", "*.png").
+		AddFilter("All Files", "*.*")
+
+	filename, err := dlg.Show()
 	if err != nil {
-		fmt.Println("Error processing args", err)
+		// Ignore error since it might be cancellation or not supported
 		return
 	}
-	atoi, _ := strconv.Atoi(fontsize)
-	grf := util.GetFontFace(float64(atoi), 180, gr)
-	if err := phonenumber.DrawPhoneWithText(s, fn, grf); err != nil {
-		fmt.Printf("Error: %s\n", err)
-		return
+	if filename != "" {
+		model.UpdateFilename(filename)
+		updateWindow()
 	}
-	fmt.Printf("Wrote: %s\n", fn)
+}
+
+func generate() {
+	if err := model.Generate(); err != nil {
+		if window != nil {
+			_ = window.Message(fmt.Sprintf("Generation failed:\n%v", err)).
+				WithTitle("Error").
+				WithError().
+				Show()
+		}
+	} else {
+		if window != nil {
+			_ = window.Message(fmt.Sprintf("Generation successful!\nSaved to: %s", model.Filename)).
+				WithTitle("Success").
+				WithInfo().
+				Show()
+		}
+	}
+	updateWindow()
 }

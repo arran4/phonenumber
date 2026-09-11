@@ -116,6 +116,9 @@ Pre-compiled binaries and packages are available on the [GitHub Releases page](h
 - Linux and macOS archives are packaged as `.tar.gz`.
 - Windows archives are packaged as `.zip`.
 
+### Linux Packages
+For convenient installation on Linux, we also publish prebuilt `.apk`, `.deb`, and `.rpm` packages.
+
 ## 7. Build from Source
 
 ### Requirements

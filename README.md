@@ -4,7 +4,7 @@ Nokia keypad simulator and multi-tap encoding generator.
 
 ## 1. Project Purpose
 
-This project provides a generator that translates text strings into their corresponding numeric key sequence as seen on classic mobile phones (often referred to as multi-tap keypad encoding). For example, typing "Hello" translates to the sequence `"4433555.555666"`. The project includes a CLI, a desktop GUI, and a Go library to generate both the string sequences and rendered images of the phone screen.
+This project provides a generator that translates text strings into their corresponding numeric key sequence as seen on classic mobile phones (often referred to as multi-tap keypad encoding). For example, typing "Hello" translates to the sequence `"4433555 555666"`. The project includes a CLI, a desktop GUI, and a Go library to generate both the string sequences and rendered images of the phone screen.
 
 ## 2. Screenshots & Sample Output
 
@@ -52,6 +52,11 @@ The CLI exits with `0` on success or if the help flag (`-h`) is requested. On er
 
 You can use the multi-tap sequence generation logic in your own Go projects. The primary entry point is the `phonenumber.Convert` function.
 
+### Conversion Semantics
+- Spaces are mapped to `'0'` by default.
+- Unknown characters (punctuation, unmapped symbols) are passed through literally.
+- When two adjacent characters map to the same keypad key, a space (`' '`) pause is inserted between them by default.
+
 ### Preferred Public API
 ```go
 package main
@@ -63,9 +68,9 @@ import (
 
 func main() {
     text := "Hello"
-    // Using default mapping (' ' -> '0')
+    // Using default mapping (' ' -> '0' and ' ' pauses)
     seq := phonenumber.Convert(text)
-    fmt.Println(seq) // Output: "4433555 555666" (depending on pauses)
+    fmt.Println(seq) // Output: "4433555 555666"
 
     // Using configuration options
     seqOpts := phonenumber.Convert(text, phonenumber.WithIgnoreSpace(), phonenumber.WithDotPauses())
@@ -97,36 +102,25 @@ go build -o drawphonegui ./cmd/drawphonegui
 
 ### Prerequisites and Limitations
 - **macOS is NOT supported** by the GUI currently.
-- **Linux Prerequisites**: You must have GTK 3 installed to build and run the GUI.
-  ```bash
-  sudo apt-get install libgtk-3-dev build-essential
-  ```
+- **Linux Prerequisites**: Users of prebuilt GUIs need the GTK 3 runtime libraries. Developers building from source need the development packages (e.g., `libgtk-3-dev` and `build-essential` on Ubuntu).
 
 ## 6. Downloads & Releases
 
 Pre-compiled binaries and packages are available on the [GitHub Releases page](https://github.com/arran4/phonenumber/releases).
 
-- **CLI (`drawphonecli`)**: Available for Linux, Windows, and macOS (amd64, arm, arm64).
+### Architecture Support Matrix
+- **CLI (`drawphonecli`)**: Available for Linux (amd64, armv6, armv7, arm64), Windows (amd64, arm64), and macOS (amd64, arm64).
 - **GUI (`drawphonegui`)**: Available for Linux (amd64) and Windows (amd64).
 
 ### Archive Formats
 - Linux and macOS archives are packaged as `.tar.gz`.
 - Windows archives are packaged as `.zip`.
 
-### Linux Packages
-For Linux, we provide `.apk`, `.deb`, and `.rpm` packages in our releases.
-
-### Homebrew
-You can install using our custom Homebrew tap:
-```bash
-brew install arran4/homebrew-tap/phonenumber
-```
-
 ## 7. Build from Source
 
 ### Requirements
 - **Go**: Version `1.26.0` or higher is required.
-- **C Compiler**: Required on Linux for GTK support (`build-essential`).
+- **C Compiler**: Required on Linux for GTK support.
 
 ### Representative Commands
 Clone the repository and build:
@@ -138,7 +132,7 @@ go build ./...
 
 ## 8. Troubleshooting
 
-- **Linux GUI Build Fails (Missing GTK)**: Ensure `libgtk-3-dev` and `build-essential` are fully installed.
+- **Linux GUI Fails to Start**: Ensure GTK 3 runtime dependencies are fully installed.
 - **Permission Errors**: If the CLI cannot write `out.png`, check that you have write permissions in your current working directory.
 - **Reporting Bugs**: If you encounter an issue or a bug, please file it on our [GitHub Issues](https://github.com/arran4/phonenumber/issues) page.
 
@@ -157,7 +151,7 @@ Run `go vet` to catch common mistakes:
 ```bash
 go vet ./...
 ```
-We also enforce strict linting using `golangci-lint` (v2):
+We also enforce strict linting using `golangci-lint`:
 ```bash
 golangci-lint run
 ```

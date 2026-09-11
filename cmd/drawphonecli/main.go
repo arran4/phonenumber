@@ -36,7 +36,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 
-	s := phonenumber.Numbers(*text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+	s := phonenumber.Convert(*text, phonenumber.WithIgnoreSpace(), phonenumber.WithDotPauses())
 	_, _ = fmt.Fprintf(stdout, "'%s'\n", s)
 
 	gr, err := util.OpenFont("goregular")

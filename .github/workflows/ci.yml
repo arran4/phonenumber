@@ -301,11 +301,15 @@ jobs:
             ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       - name: sys Deps
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev build-essential
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev build-essential xvfb
       - name: Deps download
         run: go mod download
-      - name: Test
-        run: go test ./... -v
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum go test ./... -v
+      - name: Test (macOS/Windows)
+        if: runner.os != 'Linux'
+        run: go test ./... -v -tags headless
       - name: Policy Tests
         run: cd scripts && go test -v ./...
 

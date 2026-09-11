@@ -1,3 +1,5 @@
+//go:build !headless
+
 // Copyright (C) 2025 arran4
 //
 // This program is free software: you can redistribute it and/or modify
@@ -48,7 +50,7 @@ func NewAppModel() *AppModel {
 // UpdateText updates the input text and updates the translation result.
 func (m *AppModel) UpdateText(text string) {
 	m.Text = text
-	m.Result = phonenumber.Numbers(text, phonenumber.OpIgnoreSpace, phonenumber.OpDotPauses)
+	m.Result = phonenumber.Convert(text, phonenumber.WithIgnoreSpace(), phonenumber.WithDotPauses())
 	m.ClearStatus()
 }
 

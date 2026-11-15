@@ -1,0 +1,25 @@
+# One-time release trigger for the verified v1.0.15 dependency refresh.
+# Remove after the release has published and assets have been verified.
+name: Publish phonenumber v1.0.15 once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch-release:
+    name: Request gated release-patch workflow
+    if: ${{ github.repository == 'arran4/phonenumber' && startsWith(github.event.head_commit.message, 'build(deps): refresh all dependencies and release v1.0.15') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the canonical tested and tagged release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run ci.yml --ref main \
+            -f mode=release-patch \
+            -f release_version_override=1.0.15

@@ -12,7 +12,7 @@ permissions:
 jobs:
   dispatch-release:
     name: Request gated release-patch workflow
-    if: ${{ github.repository == 'arran4/phonenumber' && startsWith(github.event.head_commit.message, 'build(deps): refresh all dependencies and release v1.0.15') }}
+    if: "${{ github.repository == 'arran4/phonenumber' && startsWith(github.event.head_commit.message, 'build(deps): refresh all dependencies and release v1.0.15') }}"
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch the canonical tested and tagged release

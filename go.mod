@@ -2,6 +2,8 @@ module phonenumber
 
 go 1.26.0
 
+toolchain go1.27.4
+
 require (
 	bitbucket.org/rj/goey v0.9.1-0.20220128211443-c35bd7e91150
 	github.com/arran4/golang-wordwrap v0.0.10

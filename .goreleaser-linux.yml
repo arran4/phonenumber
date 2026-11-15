@@ -54,10 +54,10 @@ changelog:
 nfpms:
   -
     vendor: Ubels Software Development
-    homepage: https://github.com/arran4/
+    homepage: https://github.com/arran4/phonenumber
     maintainer: Arran Ubels <arran@ubels.com.au>
-    description: NA
-    license: Private
+    description: Nokia keypad simulator and multi-tap encoding generator
+    license: GPL-3.0-only
     formats:
       - apk
       - deb

@@ -2,11 +2,13 @@ module phonenumber
 
 go 1.26.0
 
+toolchain go1.27.4
+
 require (
 	bitbucket.org/rj/goey v0.9.1-0.20220128211443-c35bd7e91150
 	github.com/arran4/golang-wordwrap v0.0.10
 	github.com/google/go-cmp v0.7.0
-	github.com/tdewolff/canvas v0.0.0-20260901160717-dae8cd8e19a7
+	github.com/tdewolff/canvas v0.0.0-20260923214215-09804640d00c
 	golang.org/x/image v0.48.0
 )
 
@@ -19,23 +21,23 @@ require (
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f // indirect
 	github.com/Kagami/go-avif v0.1.0 // indirect
-	github.com/andybalholm/brotli v1.2.2 // indirect
+	github.com/andybalholm/brotli v1.3.0 // indirect
 	github.com/benoitkugler/textlayout v0.3.2 // indirect
 	github.com/benoitkugler/textprocessing v0.0.6 // indirect
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
-	github.com/go-text/typesetting v0.3.4 // indirect
+	github.com/go-text/typesetting v0.3.5 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/kolesa-team/go-webp v1.0.5 // indirect
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/srwiley/scanx v0.0.0-20190309010443-e94503791388 // indirect
-	github.com/tdewolff/font v0.0.0-20260822205238-d0d2f004b117 // indirect
-	github.com/tdewolff/minify/v2 v2.24.17 // indirect
-	github.com/tdewolff/parse/v2 v2.8.16 // indirect
+	github.com/tdewolff/font v0.0.0-20261010204837-88a7f6b56918 // indirect
+	github.com/tdewolff/minify/v2 v2.24.25 // indirect
+	github.com/tdewolff/parse/v2 v2.8.20 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	github.com/yuin/goldmark v1.8.5 // indirect
+	github.com/yuin/goldmark v1.8.7 // indirect
 	gitlab.com/stone.code/assert v1.1.4 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	gonum.org/v1/plot v0.17.0 // indirect

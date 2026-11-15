@@ -20,6 +20,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run ci.yml --ref main \
+          gh workflow run ci.yml --repo arran4/phonenumber --ref main \
             -f mode=release-patch \
             -f release_version_override=1.0.15

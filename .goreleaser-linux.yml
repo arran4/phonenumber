@@ -68,6 +68,10 @@ nfpms:
 
 homebrew_casks:
   -
+    binaries:
+      - drawphonecli
+    description: Nokia keypad simulator and multi-tap encoding generator
+    homepage: https://github.com/arran4/phonenumber
     repository:
       owner: arran4
       name: homebrew-tap

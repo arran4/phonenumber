@@ -551,4 +551,4 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ needs.release-context.outputs.release_tag }}"
-          gh release upload "$TAG" dist/*.zip --clobber
+          gh release upload "$TAG" dist/*.zip dist/checksums-win.txt --clobber
